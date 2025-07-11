@@ -1,11 +1,12 @@
+"use client"
 import { Navbar } from "@/components/navbar"
-import { DashboardContent } from "@/components/dashboard-content"
+import { ReportsContent } from "@/components/reports-content"
 
-export default function Dashboard() {
+export default function ReportsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <DashboardContent />
+      <ReportsContent />
     </div>
   )
 }

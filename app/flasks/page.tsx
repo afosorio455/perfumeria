@@ -1,11 +1,11 @@
 import { Navbar } from "@/components/navbar"
-import { DashboardContent } from "@/components/dashboard-content"
+import { FlasksContent } from "@/components/flasks-content"
 
-export default function Dashboard() {
+export default function FlasksPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <DashboardContent />
+      <FlasksContent />
     </div>
   )
 }

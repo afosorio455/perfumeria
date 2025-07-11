@@ -1,11 +1,11 @@
 import { Navbar } from "@/components/navbar"
-import { DashboardContent } from "@/components/dashboard-content"
+import { SalesContent } from "@/components/sales-content"
 
-export default function Dashboard() {
+export default function SalesPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <DashboardContent />
+      <SalesContent />
     </div>
   )
 }

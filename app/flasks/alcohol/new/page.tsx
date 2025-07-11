@@ -1,11 +1,11 @@
 import { Navbar } from "@/components/navbar"
-import { DashboardContent } from "@/components/dashboard-content"
+import { NewAlcoholForm } from "@/components/new-alcohol-form"
 
-export default function Dashboard() {
+export default function NewAlcoholPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <DashboardContent />
+      <NewAlcoholForm />
     </div>
   )
 }
