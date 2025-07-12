@@ -11,60 +11,52 @@ import { Search, Plus, TrendingUp, DollarSign, Package } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
+interface IPerfume {
+  id: number;
+  name: string;
+}
+
+interface ISale {
+  id: number;
+  sale_date: string; // o Date, dependiendo de cómo lo manejes
+  customer_name: string;
+}
+
+interface ISaleItem {
+  id: number;
+  quantity: number;
+  subtotal: number;
+  is_refill: boolean;
+  milliliter: number | null;
+  unit_price: number;
+  perfumes: IPerfume;
+  sales: ISale;
+}
 
 export function SalesContent() {
   const supabase = createClient()
   const [searchTerm, setSearchTerm] = useState("")
   const [filterPeriod, setFilterPeriod] = useState("all")
-  const [sales, setSales] = useState<any[]>([])
+  const [sales, setSales] = useState<ISaleItem[]>([])
   useEffect(() => {
     fetchSales()
     // console.log("sales1>", sales)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSales = async () => {
 
-    const { data : salesQuery, error } = await supabase.from('sale_details').select(
+    const { data } = await supabase.from('sale_details').select(
       `quantity,subtotal,is_refill,milliliter,unit_price,subtotal
       ,perfumes (id, name)
       ,sales (id, sale_date, customer_name )`
     ).limit(50)
+    .overrideTypes<ISaleItem[]>()
 
-    setSales(salesQuery || [])
+    setSales(data || [])
 
-    console.log('ventas: ',salesQuery)
+    console.log('ventas: ',data)
   }
   // Datos de ejemplo - en producción vendrían de la base de datos
-  const sales1 = [
-    {
-      id: 1,
-      date: "2024-01-15",
-      time: "14:30",
-      perfume: "Chanel No. 5",
-      bottleType: "Atomizador",
-      quantity: 50,
-      unitPrice: 5.0,
-      total: 250,
-      customer: "Cliente Regular",
-      soldBy: "María García",
-      type: "venta",
-      isRefill: false,
-    },
-    {
-      id: 2,
-      date: "2024-01-15",
-      time: "11:15",
-      perfume: "Dior Sauvage",
-      bottleType: "Roll-on",
-      quantity: 15,
-      unitPrice: 4.0,
-      total: 60,
-      customer: "Nuevo Cliente",
-      soldBy: "Carlos López",
-      type: "venta",
-      isRefill: true,
-    },
-  ]
 
   const filteredSales = sales.filter(
     (sale) =>
@@ -179,8 +171,8 @@ export function SalesContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSales.map((sale) => (
-                <TableRow key={sale.id}>
+              {filteredSales.map((sale, index) => (
+                <TableRow key={index}>
                   <TableCell>
                     <div>
                       <div className="font-medium">{sale.sales.sale_date}</div>
@@ -193,7 +185,7 @@ export function SalesContent() {
                     <div>
                       {/* <div className="font-medium">{sale.bottleType || "N/A"}</div> */}
                       <div className="text-sm text-muted-foreground">
-                        {Math.abs(sale.milliliter)} ml
+                        {sale.milliliter === null ? 0 : Math.abs(sale.milliliter)} ml
                         {sale.is_refill && (
                           <Badge variant="secondary" className="ml-1 text-xs">
                             Recarga

@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+// import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Droplets, TrendingUp, Package, AlertTriangle, Plus, FlaskConical, Beaker } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { InventoryAlerts } from "@/components/inventory-alerts"
+
 
 export function DashboardContent() {
   const [stats, setStats] = useState({
@@ -21,15 +21,15 @@ export function DashboardContent() {
     lowStockFlasks: 0,
     lowStockAlcohol: 0,
   })
-  const [topSelling, setTopSelling] = useState([])
-  const [lowStockItems, setLowStockItems] = useState([])
-  const [recentActivity, setRecentActivity] = useState([])
+  // const [topSelling] = useState([])
+  // const [lowStockItems, setLowStockItems] = useState([])
+  // const [recentActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     fetchDashboardData()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchDashboardData = async () => {
     try {
@@ -183,7 +183,6 @@ export function DashboardContent() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Inventory Alerts */}
         <div className="lg:col-span-1">
-          {/* <InventoryAlerts /> */}
         </div>
 
         {/* Top Selling Products */}
@@ -193,7 +192,7 @@ export function DashboardContent() {
             <CardDescription>Top 5 del mes actual</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               {topSelling.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -208,7 +207,7 @@ export function DashboardContent() {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -219,7 +218,7 @@ export function DashboardContent() {
             <CardDescription>Últimas ventas procesadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               {recentActivity.map((activity, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div>
@@ -234,7 +233,7 @@ export function DashboardContent() {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>

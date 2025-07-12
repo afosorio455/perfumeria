@@ -31,13 +31,18 @@ interface SaleItem {
   saleId?:number
 }
 
+interface IPerfume {
+  id : number;
+  name : string;
+  brand : string;
+  current_stock : number;
+  price_per_ml : number;
+}
+
 export default function NewSalePage() {
   const supabase = createClient()
-  const [perfumes, setPerfumes] = useState<any[]>([])
+  const [perfumes, setPerfumes] = useState<IPerfume[]>([])
 
-  useEffect(() => {
-    fetchPerfumes()
-  }, [])
 
   const fetchPerfumes = async () => {
     try {
@@ -51,8 +56,13 @@ export default function NewSalePage() {
     } catch (error) {
       console.error("Error fetching perfumes:", error)
     }
-
   }
+
+  useEffect(() => {
+    fetchPerfumes()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  
 
 
   const [saleItems, setSaleItems] = useState<SaleItem[]>([])
@@ -70,14 +80,6 @@ export default function NewSalePage() {
     isRefill: false,
     quantity: "1",
   })
-
-  // Datos de ejemplo de perfumes disponibles
-  const availablePerfumes = [
-    { id: 1, name: "Chanel No. 5", brand: "Chanel", stock: 250, pricePerMl: 5.0 },
-    { id: 2, name: "Dior Sauvage", brand: "Dior", stock: 180, pricePerMl: 4.5 },
-    { id: 3, name: "Creed Aventus", brand: "Creed", stock: 25, pricePerMl: 8.0 },
-    { id: 4, name: "Tom Ford Black Orchid", brand: "Tom Ford", stock: 120, pricePerMl: 6.0 },
-  ]
 
   const bottleTypes = [
     { value: "atomizador", label: "Atomizador" },
@@ -107,8 +109,8 @@ export default function NewSalePage() {
     const quantity = Number.parseInt(currentItem.quantity)
     const totalMl = Number.parseInt(currentItem.milliliters) * quantity
 
-    if (totalMl > perfume.stock) {
-      alert(`Stock insuficiente. Disponible: ${perfume.stock} ml`)
+    if (totalMl > perfume.current_stock) {
+      alert(`Stock insuficiente. Disponible: ${perfume.current_stock} ml`)
       return
     }
 
@@ -123,7 +125,7 @@ export default function NewSalePage() {
       unitPrice: unitPrice,
       quantity: quantity,
       subtotal: unitPrice * quantity,
-      availableStock: perfume.stock,
+      availableStock: perfume.current_stock,
     }
 
     setSaleItems([...saleItems, newItem])
@@ -205,7 +207,7 @@ export default function NewSalePage() {
         .from('sale_details')
         .insert(dataTrasformSaleDetails)
 
-    if (error) {
+    if (error || errorSalesDetails) {
       console.error("Error al registrar la venta:", error)
     }
 
@@ -261,7 +263,7 @@ export default function NewSalePage() {
                                 {perfume.name} - {perfume.current_stock}
                               </span>
                               <Badge variant="outline" className="ml-2">
-                                {perfume.stock} ml
+                                {perfume.current_stock} ml
                               </Badge>
                             </div>
                           </SelectItem>
