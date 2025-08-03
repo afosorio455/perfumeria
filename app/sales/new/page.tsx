@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Plus, Trash2, ShoppingCart, Calculator } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, ShoppingCart } from "lucide-react"
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { createClient } from "@/lib/supabase/client"
@@ -21,22 +21,22 @@ interface SaleItem {
   perfumeId: number
   perfumeName: string
   perfumeBrand: string
-  bottleType: string
+  bottleType: number
   milliliters: number
   isRefill: boolean
   unitPrice: number
   quantity: number
   subtotal: number
   availableStock: number
-  saleId?:number
+  saleId?: number
 }
 
 interface IPerfume {
-  id : number;
-  name : string;
-  brand : string;
-  current_stock : number;
-  price_per_ml : number;
+  id: number;
+  name: string;
+  brand: string;
+  current_stock: number;
+  price_per_ml: number;
 }
 
 export default function NewSalePage() {
@@ -51,7 +51,23 @@ export default function NewSalePage() {
         .select("id, name, brand, current_stock, price_per_ml")
         .eq("status", "activo")
 
-      console.log("perfumes>", perfumesQuery)
+      const { data: flaskQuery } = await supabase.from("flasks").select(`
+        id,
+        material, 
+        size_ml,
+        cost_per_unit,
+        current_stock,
+        flask_types(name)`);
+
+      const { data: alcohols } = await supabase.from("alcohol_inventory").select(`
+        id,
+        name,
+        type, 
+        current_stock_ml,
+        cost_per_ml`);
+
+      setFlasks(flaskQuery || []);
+      setAlcohols(alcohols || []);
       setPerfumes(perfumesQuery || [])
     } catch (error) {
       console.error("Error fetching perfumes:", error)
@@ -62,8 +78,6 @@ export default function NewSalePage() {
     fetchPerfumes()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  
-
 
   const [saleItems, setSaleItems] = useState<SaleItem[]>([])
   const [customerInfo, setCustomerInfo] = useState({
@@ -71,23 +85,20 @@ export default function NewSalePage() {
     contact: "",
     email: "",
   })
+  const [flasks, setFlasks] = useState<any[]>([])
+  const [alcohols, setAlcohols] = useState<any[]>([])
   const [paymentMethod, setPaymentMethod] = useState("")
   const [notes, setNotes] = useState("")
+  
   const [currentItem, setCurrentItem] = useState({
     perfumeId: "",
     bottleType: "",
     milliliters: "",
     isRefill: false,
     quantity: "1",
+    alcohol: "",
+    price: ""
   })
-
-  const bottleTypes = [
-    { value: "atomizador", label: "Atomizador" },
-    { value: "roll-on", label: "Roll-on" },
-    { value: "spray", label: "Spray" },
-    { value: "gotero", label: "Gotero" },
-    { value: "crema", label: "Crema" },
-  ]
 
   const commonSizes = [5, 10, 15, 20, 25, 30, 50, 100]
 
@@ -95,10 +106,18 @@ export default function NewSalePage() {
     const perfume = perfumes.find((p) => p.id === Number.parseInt(currentItem.perfumeId))
     if (!perfume || !currentItem.milliliters) return 0
 
-    const basePrice = perfume.price_per_ml * Number.parseInt(currentItem.milliliters)
+    const flask = flasks.find((f: any) => f.id === Number.parseInt(currentItem.bottleType));
+    if (!flask || !currentItem.bottleType) return 0
+
+    const alcohol = alcohols.find((f: any) => f.id === Number.parseInt(currentItem.alcohol));
+    if (!alcohol || !currentItem.alcohol) return 0
+    //REVISAR ESTE ITEM LOS CALCULOS
+
+    const basePrice = (perfume.price_per_ml * Number.parseInt(currentItem.milliliters)) + flask.cost_per_unit + alcohol.cost_per_ml
     // Descuento del 10% para recargas
-    const discount = currentItem.isRefill ? 0.1 : 0
-    return basePrice * (1 - discount)
+    // const discount = currentItem.isRefill ? 0.1 : 0
+
+    return basePrice
   }
 
   const addItemToSale = () => {
@@ -119,15 +138,14 @@ export default function NewSalePage() {
       perfumeId: perfume.id,
       perfumeName: perfume.name,
       perfumeBrand: perfume.brand,
-      bottleType: currentItem.bottleType,
+      bottleType: Number.parseInt(currentItem.bottleType),
       milliliters: Number.parseInt(currentItem.milliliters),
       isRefill: currentItem.isRefill,
       unitPrice: unitPrice,
       quantity: quantity,
       subtotal: unitPrice * quantity,
-      availableStock: perfume.current_stock,
+      availableStock: perfume.current_stock
     }
-
     setSaleItems([...saleItems, newItem])
     setCurrentItem({
       perfumeId: "",
@@ -135,6 +153,8 @@ export default function NewSalePage() {
       milliliters: "",
       isRefill: false,
       quantity: "1",
+      alcohol: "", 
+      price : ""
     })
   }
 
@@ -170,11 +190,10 @@ export default function NewSalePage() {
       totalMilliliters: getTotalMilliliters(),
     }
 
-    console.log("Venta registrada:", saleData)
     // Aquí se enviarían los datos a la base de datos
     alert("Venta registrada exitosamente")
-    
-      
+
+
     const { data, error } = await supabase
       .from("sales")
       .insert({
@@ -188,24 +207,21 @@ export default function NewSalePage() {
         created_by: 5
       }).select('id').single()
 
-      console.log("data: ", data)
 
-      const dataTrasformSaleDetails = saleItems.map(saleitem => ({
-        sale_id: data?.id,
-        perfume_id: saleitem.perfumeId,
-        quantity: saleitem.quantity,
-        unit_price: saleitem.unitPrice,
-        subtotal: saleitem.subtotal,
-        is_refill: saleitem.isRefill,
-        milliliter: saleitem.milliliters,
-      }))
+    const dataTrasformSaleDetails = saleItems.map(saleitem => ({
+      sale_id: data?.id,
+      perfume_id: saleitem.perfumeId,
+      quantity: saleitem.quantity,
+      unit_price: saleitem.unitPrice,
+      subtotal: saleitem.subtotal,
+      is_refill: saleitem.isRefill,
+      milliliter: saleitem.milliliters,
+    }))
 
-      console.log("saleItems 1: ", saleItems)
-      console.log("saleItems 2: ", dataTrasformSaleDetails)
 
-      const { error: errorSalesDetails } = await supabase
-        .from('sale_details')
-        .insert(dataTrasformSaleDetails)
+    const { error: errorSalesDetails } = await supabase
+      .from('sale_details')
+      .insert(dataTrasformSaleDetails)
 
     if (error || errorSalesDetails) {
       console.error("Error al registrar la venta:", error)
@@ -277,18 +293,51 @@ export default function NewSalePage() {
                     <Select
                       value={currentItem.bottleType}
                       onValueChange={(value) => setCurrentItem({ ...currentItem, bottleType: value })}
+                    // onValueChange={(value) => console.log("VALUE: ",value) }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona el tipo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {bottleTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
+                        {flasks.map((flask: any) => (
+                          <SelectItem key={flask.id} value={flask.id}>
+                            <span>
+                              {flask.flask_types.name} - cant {flask.current_stock} 
+                            </span>
+                            <Badge variant="outline" className="ml-2">
+                              {flask.size_ml} ml
+                            </Badge>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bottleType">Tipo de acohol *</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={currentItem.alcohol}
+                        onValueChange={(value) => setCurrentItem({ ...currentItem, alcohol: value })}
+                      // onValueChange={(value) => console.log("VALUE: ",value) }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el tipo de acohol" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {alcohols.map((alcohol: any) => (
+                            <SelectItem key={alcohol.id} value={alcohol.id}>
+                              <span>
+                                {alcohol.name}
+                              </span>
+                              <Badge variant="outline" className="ml-2">
+                                {alcohol.current_stock_ml} ml
+                              </Badge>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
@@ -332,12 +381,28 @@ export default function NewSalePage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="price">Precio Unitario</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      value={currentItem.price !== "" ? currentItem.price : calculateItemPrice().toFixed(2)}
+                      onChange={(e) => setCurrentItem({ ...currentItem, price: e.target.value })}
+                      placeholder={calculateItemPrice().toFixed(2)}
+                      min="0"
+                      step="0.01"
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      Sugerido: ${calculateItemPrice().toFixed(2)}
+                    </div>
+                  </div>
+
+                  {/* <div className="space-y-2">
                     <Label>Precio Unitario</Label>
                     <div className="flex items-center space-x-2 p-2 bg-muted rounded">
                       <Calculator className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">${calculateItemPrice().toFixed(2)}</span>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="flex items-center space-x-2">

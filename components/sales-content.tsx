@@ -50,11 +50,11 @@ export function SalesContent() {
       ,perfumes (id, name)
       ,sales (id, sale_date, customer_name )`
     ).limit(50)
+    .order('id', { ascending: false })
     .overrideTypes<ISaleItem[]>()
 
     setSales(data || [])
 
-    console.log('ventas: ',data)
   }
   // Datos de ejemplo - en producción vendrían de la base de datos
 

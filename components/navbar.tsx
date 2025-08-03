@@ -25,9 +25,13 @@ export function Navbar() {
             <Link href="/sales">
               <Button variant="ghost">Ventas</Button>
             </Link>
+            <Link href="/flasks">
+              <Button variant="ghost">Frascos</Button>
+            </Link>
             <Link href="/reports">
               <Button variant="ghost">Reportes</Button>
             </Link>
+            
             <Link href="/users">
               <Button variant="ghost">Usuarios</Button>
             </Link>
