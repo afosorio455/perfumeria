@@ -29,6 +29,8 @@ interface SaleItem {
   subtotal: number
   availableStock: number
   saleId?: number
+  alcohol?: string
+  alcoholMl? : string
 }
 
 interface IPerfume {
@@ -57,7 +59,10 @@ export default function NewSalePage() {
         size_ml,
         cost_per_unit,
         current_stock,
+        alcohol_ml,
         flask_types(name)`);
+
+      console.log("frascos: ",flaskQuery)
 
       const { data: alcohols } = await supabase.from("alcohol_inventory").select(`
         id,
@@ -127,6 +132,8 @@ export default function NewSalePage() {
     const unitPrice = calculateItemPrice()
     const quantity = Number.parseInt(currentItem.quantity)
     const totalMl = Number.parseInt(currentItem.milliliters) * quantity
+    const alcoholMlCount= flasks.find((flask) =>  flask.id === Number.parseInt(currentItem.bottleType)).alcohol_ml || 0
+    console.log("VVALORES: ",alcoholMlCount)
 
     if (totalMl > perfume.current_stock) {
       alert(`Stock insuficiente. Disponible: ${perfume.current_stock} ml`)
@@ -144,8 +151,12 @@ export default function NewSalePage() {
       unitPrice: unitPrice,
       quantity: quantity,
       subtotal: unitPrice * quantity,
-      availableStock: perfume.current_stock
+      availableStock: perfume.current_stock,
+      alcohol : currentItem.alcohol,
+      alcoholMl: alcoholMlCount
     }
+
+    console.log("ITEM CREADO: ",newItem)
     setSaleItems([...saleItems, newItem])
     setCurrentItem({
       perfumeId: "",
@@ -216,8 +227,13 @@ export default function NewSalePage() {
       subtotal: saleitem.subtotal,
       is_refill: saleitem.isRefill,
       milliliter: saleitem.milliliters,
+      frasco_id : saleitem.bottleType,
+      alcohol_id: saleitem.alcohol,
+      alcohol_ml : saleitem.alcoholMl,
+      flask_id : saleitem.bottleType
     }))
 
+    console.log("dataTrasformSaleDetails: ",dataTrasformSaleDetails)
 
     const { error: errorSalesDetails } = await supabase
       .from('sale_details')
@@ -226,7 +242,6 @@ export default function NewSalePage() {
     if (error || errorSalesDetails) {
       console.error("Error al registrar la venta:", error)
     }
-
   }
 
   return (
