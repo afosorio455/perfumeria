@@ -1,8 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
+
+interface User {
+  id: number
+  nombre: string
+  email: string
+  role: string
+  status: string
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -10,50 +17,110 @@ export function useAuth() {
   const supabase = createClient()
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
+    // Check if user is logged in from localStorage
+    const checkAuthStatus = () => {
+      const storedUser = localStorage.getItem('perfumestock_user')
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser)
+          setUser(userData)
+        } catch (error) {
+          console.error('Error parsing stored user:', error)
+          localStorage.removeItem('perfumestock_user')
+        }
+      }
       setLoading(false)
     }
 
-    getInitialSession()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
+    checkAuthStatus()
+  }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { data, error }
+    try {
+      // Query the users table to find the user
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('status', 'activo')
+        .single()
+
+      if (error) {
+        return { data: null, error: { message: 'Usuario no encontrado' } }
+      }
+
+      if (!users) {
+        return { data: null, error: { message: 'Usuario no encontrado' } }
+      }
+
+      // In a real application, you should hash the password and compare with password_hash
+      // For now, we'll do a simple comparison (you should implement proper password hashing)
+      if (users.password_hash !== password) {
+        return { data: null, error: { message: 'Contraseña incorrecta' } }
+      }
+
+      // Store user data in localStorage
+      const userData = {
+        id: users.id,
+        nombre: users.nombre,
+        email: users.email,
+        role: users.role,
+        status: users.status
+      }
+      
+      localStorage.setItem('perfumestock_user', JSON.stringify(userData))
+      setUser(userData)
+
+      return { data: userData, error: null }
+    } catch (error) {
+      console.error('Error during sign in:', error)
+      return { data: null, error: { message: 'Error al iniciar sesión' } }
+    }
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: userData,
-      },
-    })
-    return { data, error }
+    try {
+      // Hash the password before storing (you should implement proper password hashing)
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          email,
+          password_hash: password, // In production, hash this password
+          nombre: userData.nombre,
+          role: userData.role || 'user',
+          status: 'activo'
+        })
+        .select()
+        .single()
+
+      if (error) {
+        return { data: null, error }
+      }
+
+      return { data, error: null }
+    } catch (error) {
+      console.error('Error during sign up:', error)
+      return { data: null, error: { message: 'Error al crear la cuenta' } }
+    }
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    return { error }
+    try {
+      localStorage.removeItem('perfumestock_user')
+      setUser(null)
+      return { error: null }
+    } catch (error) {
+      console.error('Error during sign out:', error)
+      return { error: { message: 'Error al cerrar sesión' } }
+    }
+  }
+
+  const isAuthenticated = () => {
+    return user !== null && user.status === 'activo'
+  }
+
+  const hasRole = (role: string) => {
+    return user?.role === role
   }
 
   return {
@@ -62,5 +129,7 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
+    isAuthenticated,
+    hasRole
   }
 }

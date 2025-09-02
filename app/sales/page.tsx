@@ -1,11 +1,14 @@
-import { Navbar } from "@/components/navbar"
 import { SalesContent } from "@/components/sales-content"
+import { Navbar } from "@/components/navbar"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function SalesPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <SalesContent />
-    </div>
+    <AuthGuard>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <SalesContent />
+      </div>
+    </AuthGuard>
   )
 }

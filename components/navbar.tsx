@@ -2,10 +2,20 @@
 
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Droplets } from "lucide-react"
+import { Droplets, LogOut, User } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
 
 export function Navbar() {
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await signOut()
+    router.push("/login")
+  }
+
   return (
     <header className="bg-background shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,6 +48,17 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center space-x-4">
+            {user && (
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">{user.nombre}</span>
+                <span className="text-xs text-muted-foreground">({user.role})</span>
+              </div>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
             <ThemeToggle />
           </div>
         </div>

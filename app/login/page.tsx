@@ -26,11 +26,12 @@ export default function LoginPage() {
     setLoading(true)
     setError("")
 
-    const { error } = await signIn(email, password)
+    const { data, error } = await signIn(email, password)
 
     if (error) {
       setError(error.message)
     } else {
+      // Redirigir al dashboard después del login exitoso
       router.push("/")
     }
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Droplets, TrendingUp, Package, AlertTriangle, Plus, FlaskConical, Beaker } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { UsersStats } from "./users-stats"
 
 
 export function DashboardContent() {
@@ -178,6 +179,15 @@ export function DashboardContent() {
             <p className="text-xs text-muted-foreground">Tipos por reponer</p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Users Stats */}
+      <div className="mb-8">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold">Estadísticas de Usuarios</h3>
+          <p className="text-muted-foreground">Resumen del personal del sistema</p>
+        </div>
+        <UsersStats />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
