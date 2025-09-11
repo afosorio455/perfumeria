@@ -130,7 +130,7 @@ export default function NewSalePage() {
     const perfume = perfumes.find((p) => p.id === Number.parseInt(currentItem.perfumeId))
     if (!perfume || !currentItem.bottleType || !currentItem.milliliters) return
 
-    const unitPrice = calculateItemPrice()
+    const unitPrice = currentItem.price ? Number.parseFloat(currentItem.price) : calculateItemPrice()
     const quantity = Number.parseInt(currentItem.quantity)
     const totalMl = Number.parseInt(currentItem.milliliters) * quantity
     const alcoholMlCount= flasks.find((flask) =>  flask.id === Number.parseInt(currentItem.bottleType)).alcohol_ml || 0
