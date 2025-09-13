@@ -61,10 +61,10 @@ export function ReportsContent() {
         const totalRevenueLastMonth = salesLastMonth.reduce((acc, curr) => acc + curr.subtotal, 0)
         const revenueGrowth = totalRevenueLastMonth > 0 ? ((totalRevenueThisMonth - totalRevenueLastMonth) / totalRevenueLastMonth) * 100 : totalRevenueThisMonth > 0 ? 100 : 0
 
-        const totalSoldMlThisMonth = salesThisMonth.reduce((acc, curr) => acc + (curr.milliliters * curr.quantity), 0)
-        const totalSoldMlLastMonth = salesLastMonth.reduce((acc, curr) => acc + (curr.milliliters * curr.quantity), 0)
+        const totalSoldMlThisMonth = salesThisMonth.reduce((acc, curr) => acc + (curr.milliliter * curr.quantity), 0)
+        const totalSoldMlLastMonth = salesLastMonth.reduce((acc, curr) => acc + (curr.milliliter * curr.quantity), 0)
         const soldMlGrowth = totalSoldMlLastMonth > 0 ? ((totalSoldMlThisMonth - totalSoldMlLastMonth) / totalSoldMlLastMonth) * 100 : totalSoldMlThisMonth > 0 ? 100 : 0
-
+       
         // Fetch perfume data for margin and stock
         const { data: perfumes, error: perfumesError } = await supabase.from('perfumes').select('price_per_ml, cost_per_ml, current_stock, min_stock, status')
         if (perfumesError) throw perfumesError;
@@ -89,11 +89,12 @@ export function ReportsContent() {
         const productsMap = new Map()
         salesData.forEach(sale => {
           const existing = productsMap.get(sale.perfume_name) || { name: sale.perfume_name, sold: 0, revenue: 0 }
-          existing.sold += (sale.milliliters * sale.quantity)
+          existing.sold += (sale.milliliter * sale.quantity)
           existing.revenue += sale.subtotal
           productsMap.set(sale.perfume_name, existing)
         })
         const topProducts = Array.from(productsMap.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+        
         const maxRevenue = topProducts.length > 0 ? topProducts[0].revenue : 0
         setTopSellingProducts(topProducts.map(p => ({ ...p, percentage: maxRevenue > 0 ? (p.revenue / maxRevenue) * 100 : 0 })))
 
@@ -226,6 +227,7 @@ export function ReportsContent() {
              <p className={`text-xs ${summary?.soldMlGrowth >= 0 ? "text-green-600" : "text-red-600"}`}>
               {summary?.soldMlGrowth >= 0 ? '+' : ''}{summary?.soldMlGrowth.toFixed(2) || '0.00'}% vs mes anterior
             </p>
+          
           </CardContent>
         </Card>
 
